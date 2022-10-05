@@ -1,1 +1,14 @@
 # recipes
+## Installation (Ubuntu) 
+64bit  Base Libraries
+
+    sudo apt-get install libc6:i386 libncurses5:i386 libstdc++6:i386 lib32z1 libbz2-1.0:i386
+
+[Anleitung Android Studio](https://developer.android.com/studio/install#linux)
+
+[Android Studio Download](https://developer.android.com/studio#downloads)
+
+    sudo tar -xzvf ~/Downloads/android-studio-2021.3.1.16-linux.tar.gz -C /usr/local/
+
+    cd /usr/local/android-studio/bin
+    sudo bash studio.sh
