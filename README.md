@@ -14,3 +14,9 @@ Anleitung fuer [Android Studio](https://developer.android.com/studio/install#lin
     sudo bash studio.sh
 
 Vorerst [Android SDK 33.0.3](https://android-sdk.en.softonic.com/)
+
+Problem mit adb
+    adb kill-servers
+    sudo cp ~/Android/Sdk/platform-tools/adb /usr/bin/adb
+    sudo chmod +x /usr/bin/adb
+    adb start-server
