@@ -4,7 +4,7 @@
 
     sudo apt-get install libc6:i386 libncurses5:i386 libstdc++6:i386 lib32z1 libbz2-1.0:i386
 
-[Anleitung Android Studio](https://developer.android.com/studio/install#linux)
+Anleitung fuer [Android Studio](https://developer.android.com/studio/install#linux)
 
 [Android Studio Download](https://developer.android.com/studio#downloads)
 
@@ -12,3 +12,5 @@
 
     cd /usr/local/android-studio/bin
     sudo bash studio.sh
+
+Vorerst [Android SDK 33.0.3](https://android-sdk.en.softonic.com/)
