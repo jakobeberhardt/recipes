@@ -15,7 +15,8 @@ Anleitung fuer [Android Studio](https://developer.android.com/studio/install#lin
 
 Vorerst [Android SDK 33.0.3](https://android-sdk.en.softonic.com/)
 
-Problem mit adb
+Problem mit adb (error deamon not running):
+   
     adb kill-servers
     sudo cp ~/Android/Sdk/platform-tools/adb /usr/bin/adb
     sudo chmod +x /usr/bin/adb
