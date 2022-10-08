@@ -21,3 +21,10 @@ Problem mit adb (error deamon not running):
     sudo cp ~/Android/Sdk/platform-tools/adb /usr/bin/adb
     sudo chmod +x /usr/bin/adb
     adb start-server
+
+## Android Studio 
+Emulator anlegen unter *Tools* > *Device Manager* 
+
+    Pixel Pro 6 mit API Level 33
+
+Logs unter *View* > *Tool Windows* > *Logcat* > *Verbose*

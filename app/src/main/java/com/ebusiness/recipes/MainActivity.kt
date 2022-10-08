@@ -8,6 +8,10 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.ebusiness.recipes.databinding.ActivityMainBinding
+import android.util.Log
+import com.ebusiness.recipes.SQLLiteDatabase.SQLLiteDatabaseHandler
+import com.ebusiness.recipes.model.IngredientModel
+import com.ebusiness.recipes.model.RecipeModel
 
 class MainActivity : AppCompatActivity() {
 
@@ -28,5 +32,38 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications))
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+
+        // Debugging und Testobjekte
+
+        Log.i("TAG", "App started")
+
+        val sqlliteHelper = SQLLiteDatabaseHandler(this)
+
+        // Recipes
+        val rec1 = RecipeModel("001","Suppe", 12)
+        val rec2 = RecipeModel("002","Pizza", 42)
+        val rec3 = RecipeModel("003","Obstsalat", 32)
+
+        sqlliteHelper.insertRecipe(rec1)
+        sqlliteHelper.insertRecipe(rec2)
+        sqlliteHelper.insertRecipe(rec3)
+
+        val list_rec = sqlliteHelper.getAllRecipes()
+        Log.i("TAG", "Recipes:")
+        for(i in list_rec){ Log.i("TAG",i.toString()) }
+
+        // Ingredients
+        val ing1 = IngredientModel("004", "Tomate", "01062023")
+        val ing2 = IngredientModel("005", "Apfel", "01012023")
+        val ing3 = IngredientModel("006", "Zucker", "")
+        val ing4 = IngredientModel("007", "Kartoffel", "02012023")
+
+        sqlliteHelper.insertIngredient(ing1)
+        sqlliteHelper.insertIngredient(ing2)
+        sqlliteHelper.insertIngredient(ing3)
+        sqlliteHelper.insertIngredient(ing4)
+
+        val list_ing = sqlliteHelper.getAllIngredients()
+        for(i in list_ing){ Log.i("TAG",i.toString()) }
     }
 }
