@@ -12,6 +12,7 @@ import android.util.Log
 import com.ebusiness.recipes.SQLLiteDatabase.SQLLiteDatabaseHandler
 import com.ebusiness.recipes.model.IngredientModel
 import com.ebusiness.recipes.model.RecipeModel
+import com.ebusiness.recipes.util.Unit
 
 class MainActivity : AppCompatActivity() {
 
@@ -53,10 +54,10 @@ class MainActivity : AppCompatActivity() {
         for(i in list_rec){ Log.i("TAG",i.toString()) }
 
         // Ingredients
-        val ing1 = IngredientModel("004", "Tomate", "01062023")
-        val ing2 = IngredientModel("005", "Apfel", "01012023")
-        val ing3 = IngredientModel("006", "Zucker", "")
-        val ing4 = IngredientModel("007", "Kartoffel", "02012023")
+        val ing1 = IngredientModel("004", "Tomate", "01062023", Unit.UNIT)
+        val ing2 = IngredientModel("005", "Apfel", "01012023", Unit.UNIT)
+        val ing3 = IngredientModel("006", "Zucker", "", Unit.SPOON)
+        val ing4 = IngredientModel("007", "Kartoffel", "02012023", Unit.GRAM)
 
         sqlliteHelper.insertIngredient(ing1)
         sqlliteHelper.insertIngredient(ing2)

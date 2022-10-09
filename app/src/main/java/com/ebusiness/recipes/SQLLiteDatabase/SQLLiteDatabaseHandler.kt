@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import com.ebusiness.recipes.model.RecipeModel
 import android.util.Log
 import com.ebusiness.recipes.model.IngredientModel
+import com.ebusiness.recipes.util.Unit
 
 class SQLLiteDatabaseHandler(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION){
@@ -15,7 +16,7 @@ class SQLLiteDatabaseHandler(context: Context) :
     companion object {
 
         // Db
-        private const val DATABASE_VERSION = 14
+        private const val DATABASE_VERSION = 15
         private const val DATABASE_NAME = "db0"
 
         // Rezept Tabelle
@@ -30,9 +31,10 @@ class SQLLiteDatabaseHandler(context: Context) :
 
         // Zutat Tabelle
         private const val TABLE_NAME_INGREDIENT = "ingredients"
-        private const val INGREDIENT_ID = "ingredients_uuid"
-        private const val INGREDIENT_NAME = "ingredients_name"
-        private const val INGREDIENT_MMD = "ingredients_mmd"
+        private const val INGREDIENT_ID = "ingredient_uuid"
+        private const val INGREDIENT_NAME = "ingredient_name"
+        private const val INGREDIENT_MMD = "ingredient_mmd"
+        private const val INGREDIENT_UNIT = "ingredient_unit"
     }
 
     override fun onCreate(db0: SQLiteDatabase?) {
@@ -47,7 +49,8 @@ class SQLLiteDatabaseHandler(context: Context) :
         val createIngredientTable = ("CREATE TABLE " + TABLE_NAME_INGREDIENT + "("
                 + INGREDIENT_ID + " TEXT PRIMARY KEY, "
                 + INGREDIENT_NAME + " TEXT, "
-                + INGREDIENT_MMD + " TEXT" +")")
+                + INGREDIENT_MMD + " TEXT, "
+                + INGREDIENT_UNIT + " TEXT" + ")")
         db0?.execSQL(createIngredientTable)
         Log.i("TAG", "Created $TABLE_NAME_INGREDIENT Table")
     }
@@ -114,6 +117,7 @@ class SQLLiteDatabaseHandler(context: Context) :
         contentValues.put(INGREDIENT_ID, ing.uuid)
         contentValues.put(INGREDIENT_NAME, ing.name)
         contentValues.put(INGREDIENT_MMD, ing.mmd)
+        contentValues.put(INGREDIENT_UNIT, ing.unit.toString())
 
         val success = db0.insert(TABLE_NAME_INGREDIENT, null,  contentValues)
         db0.close()
@@ -139,14 +143,16 @@ class SQLLiteDatabaseHandler(context: Context) :
         var uuid: String
         var name: String
         var mmd : String
+        var unit : String
 
         if(cursor.moveToFirst()) {
             do {
                 uuid = cursor.getString(cursor.getColumnIndex(INGREDIENT_ID))
                 name = cursor.getString(cursor.getColumnIndex(INGREDIENT_NAME))
                 mmd = cursor.getString(cursor.getColumnIndex(INGREDIENT_MMD))
+                unit = cursor.getString(cursor.getColumnIndex(INGREDIENT_UNIT))
 
-                val ing = IngredientModel(uuid = uuid, name = name, mmd = mmd)
+                val ing = IngredientModel(uuid = uuid, name = name, mmd = mmd, unit = Unit.valueOf(unit))
                 ingredientList.add(ing)
             } while (cursor.moveToNext())
         }
