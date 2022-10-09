@@ -66,5 +66,11 @@ class MainActivity : AppCompatActivity() {
 
         val list_ing = sqlliteHelper.getAllIngredients()
         for(i in list_ing){ Log.i("TAG",i.toString()) }
+
+        val ing_getby = sqlliteHelper.getIngredientByName("Apfel")
+        Log.i("TAG",ing_getby.toString())
+
+        val rec_getby = sqlliteHelper.getRecipeByName("Suppe")
+        Log.i("TAG",rec_getby.toString())
     }
 }

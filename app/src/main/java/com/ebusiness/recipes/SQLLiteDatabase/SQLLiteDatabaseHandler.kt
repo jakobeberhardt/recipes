@@ -110,6 +110,34 @@ class SQLLiteDatabaseHandler(context: Context) :
         return recipeList
     }
 
+    fun getRecipeByUuid(_uuid: String): RecipeModel? {
+        val db0 = this.writableDatabase
+        val selectQuery = "SELECT  * FROM $TABLE_NAME_RECIPE WHERE $RECIPE_ID = ?"
+        db0.rawQuery(selectQuery, arrayOf(_uuid)).use {
+            if (it.moveToFirst()) {
+                var uuid = it.getString(it.getColumnIndex(RECIPE_ID))
+                var name = it.getString(it.getColumnIndex(RECIPE_NAME))
+                var ingredients = it.getInt(it.getColumnIndex(INGREDIENT_LIST_FK))
+                return RecipeModel(uuid = uuid, name = name, ingredients = ingredients)
+            }
+        }
+        return null
+    }
+
+    fun getRecipeByName(_name: String): RecipeModel? {
+        val db0 = this.writableDatabase
+        val selectQuery = "SELECT  * FROM $TABLE_NAME_RECIPE WHERE $RECIPE_NAME = ?"
+        db0.rawQuery(selectQuery, arrayOf(_name)).use {
+            if (it.moveToFirst()) {
+                var uuid = it.getString(it.getColumnIndex(RECIPE_ID))
+                var name = it.getString(it.getColumnIndex(RECIPE_NAME))
+                var ingredients = it.getInt(it.getColumnIndex(INGREDIENT_LIST_FK))
+                return RecipeModel(uuid = uuid, name = name, ingredients = ingredients)
+            }
+        }
+        return null
+    }
+
     fun insertIngredient(ing: IngredientModel): Long{
         val db0 = this.writableDatabase
 
@@ -160,4 +188,34 @@ class SQLLiteDatabaseHandler(context: Context) :
         return ingredientList
     }
 
-}
+    fun getIngredientByUuid(_uuid: String): IngredientModel? {
+            val db0 = this.writableDatabase
+            val selectQuery = "SELECT  * FROM $TABLE_NAME_INGREDIENT WHERE $INGREDIENT_ID = ?"
+            db0.rawQuery(selectQuery, arrayOf(_uuid)).use {
+                if (it.moveToFirst()) {
+                    var uuid = it.getString(it.getColumnIndex(INGREDIENT_ID))
+                    var name = it.getString(it.getColumnIndex(INGREDIENT_NAME))
+                    var mmd = it.getString(it.getColumnIndex(INGREDIENT_MMD))
+                    var unit = it.getString(it.getColumnIndex(INGREDIENT_UNIT))
+                    return IngredientModel(uuid = uuid, name = name, mmd = mmd, unit = Unit.valueOf(unit))
+                }
+            }
+            return null
+        }
+
+    fun getIngredientByName(_name: String): IngredientModel? {
+        val db0 = this.writableDatabase
+        val selectQuery = "SELECT  * FROM $TABLE_NAME_INGREDIENT WHERE $INGREDIENT_NAME = ?"
+        db0.rawQuery(selectQuery, arrayOf(_name)).use {
+            if (it.moveToFirst()) {
+                var uuid = it.getString(it.getColumnIndex(INGREDIENT_ID))
+                var name = it.getString(it.getColumnIndex(INGREDIENT_NAME))
+                var mmd = it.getString(it.getColumnIndex(INGREDIENT_MMD))
+                var unit = it.getString(it.getColumnIndex(INGREDIENT_UNIT))
+                return IngredientModel(uuid = uuid, name = name, mmd = mmd, unit = Unit.valueOf(unit))
+            }
+        }
+        return null
+    }
+
+    }

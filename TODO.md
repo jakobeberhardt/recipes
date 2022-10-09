@@ -6,9 +6,7 @@
 
 ## SQL Lite 
 * Funktionen vervollstaendigen
-    * get*ByUUID
-    * getAll*s
-    * CRUD Funktionen im allgemeinen
+    * CRUD Funktionen im allgemeinen (Delete, Update)
 
 ## UI 
 * Landing Page
