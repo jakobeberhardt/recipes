@@ -40,14 +40,15 @@ class MainActivity : AppCompatActivity() {
 
         val sqlliteHelper = SQLLiteDatabaseHandler(this)
 
-        // Recipes
-        val rec1 = RecipeModel("001","Suppe", 12)
-        val rec2 = RecipeModel("002","Pizza", 42)
-        val rec3 = RecipeModel("003","Obstsalat", 32)
 
-        sqlliteHelper.insertRecipe(rec1)
-        sqlliteHelper.insertRecipe(rec2)
-        sqlliteHelper.insertRecipe(rec3)
+        // Recipes
+        val rec1 = RecipeModel("001","Suppe")
+        val rec2 = RecipeModel("002","Pizza")
+        val rec3 = RecipeModel("003","Obstsalat")
+
+//        sqlliteHelper.insertRecipe(rec1)
+//        sqlliteHelper.insertRecipe(rec2)
+//        sqlliteHelper.insertRecipe(rec3)
 
         val list_rec = sqlliteHelper.getAllRecipes()
         Log.i("TAG", "Recipes:")
@@ -59,10 +60,10 @@ class MainActivity : AppCompatActivity() {
         val ing3 = IngredientModel("006", "Zucker", "", Unit.SPOON)
         val ing4 = IngredientModel("007", "Kartoffel", "02012023", Unit.GRAM)
 
-        sqlliteHelper.insertIngredient(ing1)
-        sqlliteHelper.insertIngredient(ing2)
-        sqlliteHelper.insertIngredient(ing3)
-        sqlliteHelper.insertIngredient(ing4)
+//        sqlliteHelper.insertIngredient(ing1)
+//        sqlliteHelper.insertIngredient(ing2)
+//        sqlliteHelper.insertIngredient(ing3)
+//        sqlliteHelper.insertIngredient(ing4)
 
         val list_ing = sqlliteHelper.getAllIngredients()
         for(i in list_ing){ Log.i("TAG",i.toString()) }
@@ -72,5 +73,24 @@ class MainActivity : AppCompatActivity() {
 
         val rec_getby = sqlliteHelper.getRecipeByName("Suppe")
         Log.i("TAG",rec_getby.toString())
+
+
+
+        Log.i("TAG",rec1.toString())
+        Log.i("TAG",ing1.toString())
+
+        // Add
+        rec1.addIngredient(ing1)
+        rec1.addIngredient(ing2)
+        rec1.addIngredient(ing3)
+        rec1.addIngredient(ing4)
+        // Doppelt
+        rec1.addIngredient(ing4)
+        Log.i("TAG",rec1.toString())
+
+        // Test Remove
+
+
+
     }
 }

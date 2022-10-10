@@ -2,8 +2,8 @@ package com.ebusiness.recipes.model
 import com.ebusiness.recipes.util.Unit
 
 data class IngredientModel(
-    var uuid : String,
-    var name : String,
+    val uuid : String,
+    val name : String,
     var mmd : String?,
     var unit : Unit
 ) {
