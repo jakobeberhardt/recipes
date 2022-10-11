@@ -10,7 +10,7 @@ data class RecipeModel(
 
     override fun toString(): String = "id:" + this.uuid + " name:" + this.name + " ingredients:" + this.ingredients.toString()
 
-    // Fuer alle Funktionen hier: Evt. direkt eine Map als Parameter, um staendige sqllite queries zu vermeiden
+    // Fuer alle Funktionen hier: Evt. direkt eine Map als Parameter um staendige sqllite queries zu vermeiden
      fun addIngredient(ing: IngredientModel, amount: Int, db : SQLLiteDatabaseHandler){
         this.ingredients.put(ing, amount)
         db.updateRecipeIngredientList(this)
@@ -21,7 +21,7 @@ data class RecipeModel(
         db.updateRecipeIngredientList(this)
     }
 
-    fun updateIngrediantAmount(ing: IngredientModel, amount: Int, db : SQLLiteDatabaseHandler){
+    fun updateIngredientAmount(ing: IngredientModel, amount: Int, db : SQLLiteDatabaseHandler){
         this.ingredients.replace(ing, amount)
         db.updateRecipeIngredientList(this)
     }

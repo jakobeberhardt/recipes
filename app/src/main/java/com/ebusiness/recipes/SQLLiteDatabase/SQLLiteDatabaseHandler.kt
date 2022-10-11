@@ -17,8 +17,9 @@ class SQLLiteDatabaseHandler(context: Context) :
     companion object {
 
         // Db
-        private const val DATABASE_VERSION = 41
+        private const val DATABASE_VERSION = 75
         private const val DATABASE_NAME = "db0"
+        private const val LOG_TAG = "DB"
 
         // Rezept Tabelle
         private const val TABLE_NAME_RECIPE = "recipes"
@@ -38,12 +39,12 @@ class SQLLiteDatabaseHandler(context: Context) :
     }
 
     override fun onCreate(db0: SQLiteDatabase?) {
-        Log.i("TAG", "Attempting to create DB")
+        Log.i(LOG_TAG, "Attempting to create DB")
         val createRecipeTable = ("CREATE TABLE " + TABLE_NAME_RECIPE + "("
                 + RECIPE_ID + " TEXT PRIMARY KEY, "
                 + RECIPE_NAME + " TEXT" + ")")
         db0?.execSQL(createRecipeTable)
-        Log.i("TAG", "Created $TABLE_NAME_RECIPE Table")
+        Log.i(LOG_TAG, "Created $TABLE_NAME_RECIPE Table")
 
         val createIngredientTable = ("CREATE TABLE " + TABLE_NAME_INGREDIENT + "("
                 + INGREDIENT_ID + " TEXT PRIMARY KEY, "
@@ -51,25 +52,24 @@ class SQLLiteDatabaseHandler(context: Context) :
                 + INGREDIENT_MMD + " TEXT, "
                 + INGREDIENT_UNIT + " TEXT" + ")")
         db0?.execSQL(createIngredientTable)
-        Log.i("TAG", "Created $TABLE_NAME_INGREDIENT Table")
+        Log.i(LOG_TAG, "Created $TABLE_NAME_INGREDIENT Table")
 
         val createIngredientListTable = ("CREATE TABLE " + TABLE_NAME_INGREDIENT_LISTS + "("
                 + RECIPE_ID + " TEXT NOT NULL, "
                 + INGREDIENT_ID + " TEXT NOT NULL, "
                 + INGREDIENT_AMOUNT + " INTEGER, "
                 + "FOREIGN KEY (" + RECIPE_ID + ") REFERENCES " + TABLE_NAME_RECIPE + "(" + RECIPE_ID + "), "
-                + "FOREIGN KEY (" + INGREDIENT_ID + ") REFERENCES " + TABLE_NAME_INGREDIENT + "(" + INGREDIENT_ID + "), "
-                + "UNIQUE (" + RECIPE_ID + ", " + INGREDIENT_ID + ")" + ")")
+                + "FOREIGN KEY (" + INGREDIENT_ID + ") REFERENCES " + TABLE_NAME_INGREDIENT + "(" + INGREDIENT_ID + ")" + ")")
         db0?.execSQL(createIngredientListTable)
-        Log.i("TAG", "Created $TABLE_NAME_INGREDIENT_LISTS Table")
+        Log.i(LOG_TAG, "Created $TABLE_NAME_INGREDIENT_LISTS Table")
     }
 
     override fun onUpgrade(db0: SQLiteDatabase?, p1: Int, p2: Int) {
-        Log.i("TAG", "Upgrading DB")
+        Log.i(LOG_TAG, "Upgrading DB")
         db0!!.execSQL("DROP TABLE IF EXISTS $TABLE_NAME_RECIPE")
         db0.execSQL("DROP TABLE IF EXISTS $TABLE_NAME_INGREDIENT")
         db0.execSQL("DROP TABLE IF EXISTS $TABLE_NAME_INGREDIENT_LISTS")
-        Log.i("TAG", "Upgraded DB")
+        Log.i(LOG_TAG, "Upgraded DB")
         onCreate(db0)
     }
 
@@ -85,7 +85,7 @@ class SQLLiteDatabaseHandler(context: Context) :
         db0.close()
 
 
-        Log.i("TAG", "Inserted new Recipe with ID " + rec.uuid)
+        Log.i(LOG_TAG, "Inserted new Recipe with ID " + rec.uuid)
         return success
     }
 
@@ -140,7 +140,6 @@ class SQLLiteDatabaseHandler(context: Context) :
         val db0 = this.readableDatabase
         var ingredientMap: MutableMap<IngredientModel, Int> = mutableMapOf()
         val selectQuery = "SELECT * FROM $TABLE_NAME_INGREDIENT_LISTS WHERE $RECIPE_ID = ?"
-        Log.i("TAG", selectQuery)
 
         val cursor: Cursor?
 
@@ -210,8 +209,7 @@ class SQLLiteDatabaseHandler(context: Context) :
 
             if (cursor.moveToFirst()) {
                 do {
-                    ing =
-                        getIngredientByName(cursor.getString(cursor.getColumnIndex(INGREDIENT_ID)))
+                    ing = getIngredientByUuid(cursor.getString(cursor.getColumnIndex(INGREDIENT_ID)))
                     amount = cursor.getInt(cursor.getColumnIndex(INGREDIENT_AMOUNT))
 
                     if (ing != null) {
@@ -272,20 +270,15 @@ class SQLLiteDatabaseHandler(context: Context) :
 
         fun deleteAllIngrendientsOfRecipe(rec: RecipeModel): Int {
             val db0 = this.writableDatabase
-            val whereClause = (INGREDIENT_ID + " = " + RECIPE_ID)
-            val success = db0.delete(TABLE_NAME_INGREDIENT_LISTS, whereClause, null)
-            //db0.close()
-            Log.i("TAG", "Flushed ingredient list of ${rec.uuid}")
-            return success
+                var whereClause = (RECIPE_ID + " = ?")
+                val success = db0.delete(TABLE_NAME_INGREDIENT_LISTS, whereClause, arrayOf(rec.uuid))
+
+                Log.i(LOG_TAG, "Flushed ingredient list of ${rec.uuid}($success)")
+                return success
         }
 
         fun updateRecipeIngredientList(rec: RecipeModel): Long {
             val db0 = this.writableDatabase
-            val old = getIngredientList(rec)
-
-            if (rec.ingredients.equals(old)) {
-                return 0
-            }
 
             deleteAllIngrendientsOfRecipe(rec)
 
@@ -296,13 +289,10 @@ class SQLLiteDatabaseHandler(context: Context) :
                 contentValues.put(INGREDIENT_AMOUNT, i.second)
 
                 db0.insert(TABLE_NAME_INGREDIENT_LISTS, null, contentValues)
-                Log.i(
-                    "TAG",
-                    "Inserted " + i.first.uuid + "(" + i.second.toString() + ")" + " into ingredient list of " + rec.uuid
-                )
+                Log.i(LOG_TAG,"Inserted " + i.first.uuid + "(" + i.second.toString() + ")" + " into ingredient list of " + rec.uuid)
             }
             db0.close()
-            Log.i("TAG", "Updated ingredient list of recipe " + rec.uuid)
+            Log.i(LOG_TAG, "Updated ingredient list of recipe " + rec.uuid)
             return 0
         }
 
@@ -317,7 +307,7 @@ class SQLLiteDatabaseHandler(context: Context) :
 
             val success = db0.insert(TABLE_NAME_INGREDIENT, null, contentValues)
             db0.close()
-            Log.i("TAG", "Inserted new Ingredient with ID " + ing.uuid)
+            Log.i(LOG_TAG, "Inserted new Ingredient with ID " + ing.uuid)
             return success
         }
 
@@ -413,6 +403,4 @@ class SQLLiteDatabaseHandler(context: Context) :
 
         return str
     }
-
-
     }
