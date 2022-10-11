@@ -38,59 +38,58 @@ class MainActivity : AppCompatActivity() {
 
         Log.i("TAG", "App started")
 
+        // Singleton
         val sqlliteHelper = SQLLiteDatabaseHandler(this)
 
 
-        // Recipes
-        val rec1 = RecipeModel("001","Suppe")
-        val rec2 = RecipeModel("002","Pizza")
-        val rec3 = RecipeModel("003","Obstsalat")
-
-//        sqlliteHelper.insertRecipe(rec1)
-//        sqlliteHelper.insertRecipe(rec2)
-//        sqlliteHelper.insertRecipe(rec3)
-
-        val list_rec = sqlliteHelper.getAllRecipes()
-        Log.i("TAG", "Recipes:")
-        for(i in list_rec){ Log.i("TAG",i.toString()) }
-
-        // Ingredients
-        val ing1 = IngredientModel("004", "Tomate", "01062023", Unit.UNIT)
-        val ing2 = IngredientModel("005", "Apfel", "01012023", Unit.UNIT)
-        val ing3 = IngredientModel("006", "Zucker", "", Unit.SPOON)
-        val ing4 = IngredientModel("007", "Kartoffel", "02012023", Unit.GRAM)
-
-//        sqlliteHelper.insertIngredient(ing1)
-//        sqlliteHelper.insertIngredient(ing2)
-//        sqlliteHelper.insertIngredient(ing3)
-//        sqlliteHelper.insertIngredient(ing4)
-
-        val list_ing = sqlliteHelper.getAllIngredients()
-        for(i in list_ing){ Log.i("TAG",i.toString()) }
-
-        val ing_getby = sqlliteHelper.getIngredientByName("Apfel")
-        Log.i("TAG",ing_getby.toString())
-
-        val rec_getby = sqlliteHelper.getRecipeByName("Suppe")
-        Log.i("TAG",rec_getby.toString())
-
-
+        // Recipes anlegen
+        var rec1 = RecipeModel("001","Suppe")
+        var rec2 = RecipeModel("002","Pizza")
+        var rec3 = RecipeModel("003","Obstsalat")
 
         Log.i("TAG",rec1.toString())
-        Log.i("TAG",ing1.toString())
 
-        // Add
-        rec1.addIngredient(ing1)
-        rec1.addIngredient(ing2)
-        rec1.addIngredient(ing3)
-        rec1.addIngredient(ing4)
-        // Doppelt
-        rec1.addIngredient(ing4)
+        // Recipes in DB einpflegen
+        sqlliteHelper.insertRecipe(rec1)
+        sqlliteHelper.insertRecipe(rec2)
+        sqlliteHelper.insertRecipe(rec3)
+
+        // Alle Recipes mittels sqllite query abfragen
+        for(r in sqlliteHelper.getAllRecipes()) {
+            Log.i("TAG", r.toString())
+        }
+
+        // Zutaten anlegen
+        var ing1 = IngredientModel("004", "Tomate", "2022", Unit.UNIT)
+        var ing2 = IngredientModel("005", "Zucker", "2022", Unit.GRAM)
+        var ing3 = IngredientModel("006", "Butter", "2022", Unit.SPOON)
+
+        // Zutaten in DB einpflegen und abfragen
+        sqlliteHelper.insertIngredient(ing1)
+        sqlliteHelper.insertIngredient(ing2)
+        sqlliteHelper.insertIngredient(ing3)
+        for(i in sqlliteHelper.getAllIngredients()) {
+            Log.i("TAG", i.toString())
+        }
+
+        // Zutat zu Rezept hinzufuegen
+        rec1.addIngredient(ing1, 4, sqlliteHelper)
+        Log.i("TAG", "Added " + ing1.toString() + " to " + rec1.toString())
+
+        // Ausgabe des aktuellen objects
         Log.i("TAG",rec1.toString())
 
-        // Test Remove
+        // Ausgabe der aktualisierten db
+        var tmp = sqlliteHelper.getRecipeByUuid(rec1.uuid)
+        Log.i("TAG", "Updated:")
+        Log.i("TAG", tmp.toString())
 
+        Log.i("TAG", rec1.ingredients.toString())
 
+        Log.i("TAG", sqlliteHelper.printLists())
+
+        var map = sqlliteHelper.getIngredientListByUuid("001")
+        Log.i("TAG", map.toString())
 
     }
 }

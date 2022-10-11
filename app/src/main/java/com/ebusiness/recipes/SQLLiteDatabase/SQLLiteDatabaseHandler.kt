@@ -12,12 +12,12 @@ import com.ebusiness.recipes.util.Unit
 import java.time.temporal.TemporalAmount
 
 class SQLLiteDatabaseHandler(context: Context) :
-    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION){
+    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
 
         // Db
-        private const val DATABASE_VERSION = 16
+        private const val DATABASE_VERSION = 41
         private const val DATABASE_NAME = "db0"
 
         // Rezept Tabelle
@@ -34,7 +34,7 @@ class SQLLiteDatabaseHandler(context: Context) :
 
         // Zutatenliste Tabelle
         private const val TABLE_NAME_INGREDIENT_LISTS = "ingredient_lists"
-        private const val INGREDIENT_AMOUNT="ingredient_amount"
+        private const val INGREDIENT_AMOUNT = "ingredient_amount"
     }
 
     override fun onCreate(db0: SQLiteDatabase?) {
@@ -61,26 +61,27 @@ class SQLLiteDatabaseHandler(context: Context) :
                 + "FOREIGN KEY (" + INGREDIENT_ID + ") REFERENCES " + TABLE_NAME_INGREDIENT + "(" + INGREDIENT_ID + "), "
                 + "UNIQUE (" + RECIPE_ID + ", " + INGREDIENT_ID + ")" + ")")
         db0?.execSQL(createIngredientListTable)
-        Log.i("TAG", "Created $TABLE_NAME_INGREDIENT Table")
+        Log.i("TAG", "Created $TABLE_NAME_INGREDIENT_LISTS Table")
     }
 
     override fun onUpgrade(db0: SQLiteDatabase?, p1: Int, p2: Int) {
         Log.i("TAG", "Upgrading DB")
         db0!!.execSQL("DROP TABLE IF EXISTS $TABLE_NAME_RECIPE")
         db0.execSQL("DROP TABLE IF EXISTS $TABLE_NAME_INGREDIENT")
+        db0.execSQL("DROP TABLE IF EXISTS $TABLE_NAME_INGREDIENT_LISTS")
         Log.i("TAG", "Upgraded DB")
         onCreate(db0)
     }
 
 
-    fun insertRecipe(rec: RecipeModel): Long{
+    fun insertRecipe(rec: RecipeModel): Long {
         val db0 = this.writableDatabase
 
         val contentValues = ContentValues()
         contentValues.put(RECIPE_ID, rec.uuid)
         contentValues.put(RECIPE_NAME, rec.name)
 
-        val success = db0.insert(TABLE_NAME_RECIPE, null,  contentValues)
+        val success = db0.insert(TABLE_NAME_RECIPE, null, contentValues)
         db0.close()
 
 
@@ -88,7 +89,7 @@ class SQLLiteDatabaseHandler(context: Context) :
         return success
     }
 
-    fun getAllRecipes(): ArrayList<RecipeModel>{
+    fun getAllRecipes(): ArrayList<RecipeModel> {
         val recipeList: ArrayList<RecipeModel> = ArrayList()
         val selectQuery = "SELECT * FROM $TABLE_NAME_RECIPE"
         val db0 = this.readableDatabase
@@ -97,7 +98,7 @@ class SQLLiteDatabaseHandler(context: Context) :
 
         try {
             cursor = db0.rawQuery(selectQuery, null)
-        }catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
             db0.execSQL(selectQuery)
             return ArrayList()
@@ -106,11 +107,12 @@ class SQLLiteDatabaseHandler(context: Context) :
         var uuid: String
         var name: String
 
-        if(cursor.moveToFirst()) {
+        if (cursor.moveToFirst()) {
             do {
                 uuid = cursor.getString(cursor.getColumnIndex(RECIPE_ID))
                 name = cursor.getString(cursor.getColumnIndex(RECIPE_NAME))
 
+                // Add ingredients once implemented
                 val rec = RecipeModel(uuid = uuid, name = name)
                 recipeList.add(rec)
             } while (cursor.moveToNext())
@@ -119,18 +121,6 @@ class SQLLiteDatabaseHandler(context: Context) :
         return recipeList
     }
 
-    fun getRecipeByUuid(_uuid: String): RecipeModel? {
-        val db0 = this.writableDatabase
-        val selectQuery = "SELECT  * FROM $TABLE_NAME_RECIPE WHERE $RECIPE_ID = ?"
-        db0.rawQuery(selectQuery, arrayOf(_uuid)).use {
-            if (it.moveToFirst()) {
-                var uuid = it.getString(it.getColumnIndex(RECIPE_ID))
-                var name = it.getString(it.getColumnIndex(RECIPE_NAME))
-                return RecipeModel(uuid = uuid, name = name)
-            }
-        }
-        return null
-    }
 
     fun getRecipeByName(_name: String): RecipeModel? {
         val db0 = this.writableDatabase
@@ -139,104 +129,239 @@ class SQLLiteDatabaseHandler(context: Context) :
             if (it.moveToFirst()) {
                 val uuid = it.getString(it.getColumnIndex(RECIPE_ID))
                 val name = it.getString(it.getColumnIndex(RECIPE_NAME))
-                return RecipeModel(uuid = uuid, name = name)
+                val ingredients = getIngredientListByName(_name)
+                return RecipeModel(uuid = uuid, name = name, ingredients = ingredients)
             }
         }
         return null
     }
 
-    fun getIngredientList(rec: RecipeModel): ArrayList<IngredientModel>{
+    fun getIngredientList(rec: RecipeModel): MutableMap<IngredientModel, Int> {
         val db0 = this.readableDatabase
-        val ingredientList: ArrayList<IngredientModel> = ArrayList()
+        var ingredientMap: MutableMap<IngredientModel, Int> = mutableMapOf()
         val selectQuery = "SELECT * FROM $TABLE_NAME_INGREDIENT_LISTS WHERE $RECIPE_ID = ?"
+        Log.i("TAG", selectQuery)
 
         val cursor: Cursor?
 
         try {
             cursor = db0.rawQuery(selectQuery, arrayOf(rec.uuid))
-        }catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
             db0.execSQL(selectQuery)
-            return ArrayList()
+            return mutableMapOf()
         }
 
-        var uuid: String
-        var name: String
-        var mmd : String
-        var unit : String
+        var ing: IngredientModel?
+        var amount: Int
 
-        if(cursor.moveToFirst()) {
+        if (cursor.moveToFirst()) {
             do {
-                uuid = cursor.getString(cursor.getColumnIndex(INGREDIENT_ID))
-                name = cursor.getString(cursor.getColumnIndex(INGREDIENT_NAME))
-                mmd = cursor.getString(cursor.getColumnIndex(INGREDIENT_MMD))
-                unit = cursor.getString(cursor.getColumnIndex(INGREDIENT_UNIT))
+                ing =
+                    getIngredientByName(cursor.getString(cursor.getColumnIndex(INGREDIENT_ID)))
+                amount = cursor.getInt(cursor.getColumnIndex(INGREDIENT_AMOUNT))
 
-                val ing = IngredientModel(uuid = uuid, name = name, mmd = mmd, unit = Unit.valueOf(unit))
-                ingredientList.add(ing)
+                if (ing != null) {
+                    ingredientMap.put(ing, amount)
+                }
             } while (cursor.moveToNext())
         }
 
-        return ingredientList
+        return ingredientMap
     }
 
-    fun updateRecipe(rec: RecipeModel, amount: Int?){
-        val db0 = this.writableDatabase
+        fun getIngredientByName(_name: String): IngredientModel? {
+            val db0 = this.writableDatabase
+            val selectQuery = "SELECT  * FROM $TABLE_NAME_INGREDIENT WHERE $INGREDIENT_NAME = ?"
+            db0.rawQuery(selectQuery, arrayOf(_name)).use {
+                if (it.moveToFirst()) {
+                    val uuid = it.getString(it.getColumnIndex(INGREDIENT_ID))
+                    val name = it.getString(it.getColumnIndex(INGREDIENT_NAME))
+                    val mmd = it.getString(it.getColumnIndex(INGREDIENT_MMD))
+                    val unit = it.getString(it.getColumnIndex(INGREDIENT_UNIT))
+                    return IngredientModel(
+                        uuid = uuid,
+                        name = name,
+                        mmd = mmd,
+                        unit = Unit.valueOf(unit)
+                    )
+                }
+            }
+            return null
+        }
 
+        fun getIngredientListByUuid(_uuid: String): MutableMap<IngredientModel, Int> {
+            val db0 = this.readableDatabase
+            var ingredientMap: MutableMap<IngredientModel, Int> = mutableMapOf()
+            val selectQuery = "SELECT * FROM $TABLE_NAME_INGREDIENT_LISTS WHERE $RECIPE_ID = ?"
 
-    }
+            val cursor: Cursor?
 
-    fun insertIngredient(ing: IngredientModel): Long{
-        val db0 = this.writableDatabase
+            try {
+                cursor = db0.rawQuery(selectQuery, arrayOf(_uuid))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                db0.execSQL(selectQuery)
+                return mutableMapOf()
+            }
 
-        val contentValues = ContentValues()
-        contentValues.put(INGREDIENT_ID, ing.uuid)
-        contentValues.put(INGREDIENT_NAME, ing.name)
-        contentValues.put(INGREDIENT_MMD, ing.mmd)
-        contentValues.put(INGREDIENT_UNIT, ing.unit.toString())
+            var ing: IngredientModel?
+            var amount: Int
 
-        val success = db0.insert(TABLE_NAME_INGREDIENT, null,  contentValues)
-        db0.close()
-        Log.i("TAG", "Inserted new Ingredient with ID " + ing.uuid)
-        return success
-    }
+            if (cursor.moveToFirst()) {
+                do {
+                    ing =
+                        getIngredientByName(cursor.getString(cursor.getColumnIndex(INGREDIENT_ID)))
+                    amount = cursor.getInt(cursor.getColumnIndex(INGREDIENT_AMOUNT))
 
-    fun getAllIngredients(): ArrayList<IngredientModel>{
-        val ingredientList: ArrayList<IngredientModel> = ArrayList()
-        val selectQuery = "SELECT * FROM $TABLE_NAME_INGREDIENT"
+                    if (ing != null) {
+                        ingredientMap.put(ing, amount)
+                    }
+                } while (cursor.moveToNext())
+            }
+
+            return ingredientMap
+        }
+
+    fun getIngredientListByName(_name: String): MutableMap<IngredientModel, Int> {
         val db0 = this.readableDatabase
+        var ingredientMap: MutableMap<IngredientModel, Int> = mutableMapOf()
+        val selectQuery = "SELECT * FROM $TABLE_NAME_INGREDIENT_LISTS WHERE $RECIPE_ID = ?"
 
         val cursor: Cursor?
 
         try {
-            cursor = db0.rawQuery(selectQuery, null)
-        }catch (e: Exception){
+            cursor = db0.rawQuery(selectQuery, arrayOf(_name))
+        } catch (e: Exception) {
             e.printStackTrace()
             db0.execSQL(selectQuery)
-            return ArrayList()
+            return mutableMapOf()
         }
 
-        var uuid: String
-        var name: String
-        var mmd : String
-        var unit : String
+        var ing: IngredientModel?
+        var amount: Int
 
-        if(cursor.moveToFirst()) {
+        if (cursor.moveToFirst()) {
             do {
-                uuid = cursor.getString(cursor.getColumnIndex(INGREDIENT_ID))
-                name = cursor.getString(cursor.getColumnIndex(INGREDIENT_NAME))
-                mmd = cursor.getString(cursor.getColumnIndex(INGREDIENT_MMD))
-                unit = cursor.getString(cursor.getColumnIndex(INGREDIENT_UNIT))
+                ing = getIngredientByName(cursor.getString(cursor.getColumnIndex(INGREDIENT_ID)))
+                amount = cursor.getInt(cursor.getColumnIndex(INGREDIENT_AMOUNT))
 
-                val ing = IngredientModel(uuid = uuid, name = name, mmd = mmd, unit = Unit.valueOf(unit))
-                ingredientList.add(ing)
+                if (ing != null) {
+                    ingredientMap.put(ing, amount)
+                }
             } while (cursor.moveToNext())
         }
 
-        return ingredientList
+        return ingredientMap
     }
 
-    fun getIngredientByUuid(_uuid: String): IngredientModel? {
+        fun getRecipeByUuid(_uuid: String): RecipeModel? {
+            val db0 = this.writableDatabase
+            val selectQuery = "SELECT  * FROM $TABLE_NAME_RECIPE WHERE $RECIPE_ID = ?"
+            db0.rawQuery(selectQuery, arrayOf(_uuid)).use {
+                if (it.moveToFirst()) {
+                    val uuid = it.getString(it.getColumnIndex(RECIPE_ID))
+                    val name = it.getString(it.getColumnIndex(RECIPE_NAME))
+                    val ingredients = getIngredientListByUuid(_uuid)
+                    return RecipeModel(uuid = uuid, name = name, ingredients = ingredients)
+                }
+            }
+            return null
+        }
+
+
+        fun deleteAllIngrendientsOfRecipe(rec: RecipeModel): Int {
+            val db0 = this.writableDatabase
+            val whereClause = (INGREDIENT_ID + " = " + RECIPE_ID)
+            val success = db0.delete(TABLE_NAME_INGREDIENT_LISTS, whereClause, null)
+            //db0.close()
+            Log.i("TAG", "Flushed ingredient list of ${rec.uuid}")
+            return success
+        }
+
+        fun updateRecipeIngredientList(rec: RecipeModel): Long {
+            val db0 = this.writableDatabase
+            val old = getIngredientList(rec)
+
+            if (rec.ingredients.equals(old)) {
+                return 0
+            }
+
+            deleteAllIngrendientsOfRecipe(rec)
+
+            for (i in rec.ingredients.toList()) {
+                val contentValues = ContentValues()
+                contentValues.put(RECIPE_ID, rec.uuid)
+                contentValues.put(INGREDIENT_ID, i.first.uuid)
+                contentValues.put(INGREDIENT_AMOUNT, i.second)
+
+                db0.insert(TABLE_NAME_INGREDIENT_LISTS, null, contentValues)
+                Log.i(
+                    "TAG",
+                    "Inserted " + i.first.uuid + "(" + i.second.toString() + ")" + " into ingredient list of " + rec.uuid
+                )
+            }
+            db0.close()
+            Log.i("TAG", "Updated ingredient list of recipe " + rec.uuid)
+            return 0
+        }
+
+        fun insertIngredient(ing: IngredientModel): Long {
+            val db0 = this.writableDatabase
+
+            val contentValues = ContentValues()
+            contentValues.put(INGREDIENT_ID, ing.uuid)
+            contentValues.put(INGREDIENT_NAME, ing.name)
+            contentValues.put(INGREDIENT_MMD, ing.mmd)
+            contentValues.put(INGREDIENT_UNIT, ing.unit.toString())
+
+            val success = db0.insert(TABLE_NAME_INGREDIENT, null, contentValues)
+            db0.close()
+            Log.i("TAG", "Inserted new Ingredient with ID " + ing.uuid)
+            return success
+        }
+
+        fun getAllIngredients(): ArrayList<IngredientModel> {
+            val ingredientList: ArrayList<IngredientModel> = ArrayList()
+            val selectQuery = "SELECT * FROM $TABLE_NAME_INGREDIENT"
+            val db0 = this.readableDatabase
+
+            val cursor: Cursor?
+
+            try {
+                cursor = db0.rawQuery(selectQuery, null)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                db0.execSQL(selectQuery)
+                return ArrayList()
+            }
+
+            var uuid: String
+            var name: String
+            var mmd: String
+            var unit: String
+
+            if (cursor.moveToFirst()) {
+                do {
+                    uuid = cursor.getString(cursor.getColumnIndex(INGREDIENT_ID))
+                    name = cursor.getString(cursor.getColumnIndex(INGREDIENT_NAME))
+                    mmd = cursor.getString(cursor.getColumnIndex(INGREDIENT_MMD))
+                    unit = cursor.getString(cursor.getColumnIndex(INGREDIENT_UNIT))
+
+                    val ing = IngredientModel(
+                        uuid = uuid,
+                        name = name,
+                        mmd = mmd,
+                        unit = Unit.valueOf(unit)
+                    )
+                    ingredientList.add(ing)
+                } while (cursor.moveToNext())
+            }
+
+            return ingredientList
+        }
+
+        fun getIngredientByUuid(_uuid: String): IngredientModel? {
             val db0 = this.writableDatabase
             val selectQuery = "SELECT  * FROM $TABLE_NAME_INGREDIENT WHERE $INGREDIENT_ID = ?"
             db0.rawQuery(selectQuery, arrayOf(_uuid)).use {
@@ -245,25 +370,49 @@ class SQLLiteDatabaseHandler(context: Context) :
                     val name = it.getString(it.getColumnIndex(INGREDIENT_NAME))
                     val mmd = it.getString(it.getColumnIndex(INGREDIENT_MMD))
                     val unit = it.getString(it.getColumnIndex(INGREDIENT_UNIT))
-                    return IngredientModel(uuid = uuid, name = name, mmd = mmd, unit = Unit.valueOf(unit))
+                    return IngredientModel(
+                        uuid = uuid,
+                        name = name,
+                        mmd = mmd,
+                        unit = Unit.valueOf(unit)
+                    )
                 }
             }
             return null
         }
 
-    fun getIngredientByName(_name: String): IngredientModel? {
-        val db0 = this.writableDatabase
-        val selectQuery = "SELECT  * FROM $TABLE_NAME_INGREDIENT WHERE $INGREDIENT_NAME = ?"
-        db0.rawQuery(selectQuery, arrayOf(_name)).use {
-            if (it.moveToFirst()) {
-                val uuid = it.getString(it.getColumnIndex(INGREDIENT_ID))
-                val name = it.getString(it.getColumnIndex(INGREDIENT_NAME))
-                val mmd = it.getString(it.getColumnIndex(INGREDIENT_MMD))
-                val unit = it.getString(it.getColumnIndex(INGREDIENT_UNIT))
-                return IngredientModel(uuid = uuid, name = name, mmd = mmd, unit = Unit.valueOf(unit))
-            }
+    //Debug function
+    fun printLists(): String {
+        val selectQuery = "SELECT * FROM $TABLE_NAME_INGREDIENT_LISTS"
+        val db0 = this.readableDatabase
+        var str = ""
+
+        val cursor: Cursor?
+
+        try {
+            cursor = db0.rawQuery(selectQuery, null)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            db0.execSQL(selectQuery)
+            return String()
         }
-        return null
+
+        var rid: String
+        var iid: String
+        var amount: Int
+
+        if (cursor.moveToFirst()) {
+            do {
+                rid = cursor.getString(cursor.getColumnIndex(RECIPE_ID))
+                iid = cursor.getString(cursor.getColumnIndex(INGREDIENT_ID))
+                amount = cursor.getInt(cursor.getColumnIndex(INGREDIENT_AMOUNT))
+
+                str = "$str :: $rid $iid $amount\n"
+            } while (cursor.moveToNext())
+        }
+
+        return str
     }
+
 
     }

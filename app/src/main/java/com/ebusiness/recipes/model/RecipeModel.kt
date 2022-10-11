@@ -1,25 +1,28 @@
 package com.ebusiness.recipes.model
 
+import com.ebusiness.recipes.SQLLiteDatabase.SQLLiteDatabaseHandler
+
 data class RecipeModel(
     val uuid: String,
     val name: String,
-    // Spaeter Array <IngredientsModel>
-    var ingredients: ArrayList<IngredientModel> = ArrayList<IngredientModel>(),
+    var ingredients: MutableMap<IngredientModel, Int> = mutableMapOf()
 ){
 
     override fun toString(): String = "id:" + this.uuid + " name:" + this.name + " ingredients:" + this.ingredients.toString()
 
-    fun addIngredient(ing: IngredientModel){
-        this.ingredients = this.ingredients ?: ArrayList<IngredientModel>()
-            if(this.ingredients.contains(ing).not()){
-                this.ingredients.add(ing)
-            }
-        }
+    // Fuer alle Funktionen hier: Evt. direkt eine Map als Parameter, um staendige sqllite queries zu vermeiden
+     fun addIngredient(ing: IngredientModel, amount: Int, db : SQLLiteDatabaseHandler){
+        this.ingredients.put(ing, amount)
+        db.updateRecipeIngredientList(this)
+    }
 
-    fun removeIngredient(ing: IngredientModel){
-        if(this.ingredients.isEmpty().not()) {
-            this.ingredients.remove(ing)
-        }
+    fun removeIngredient(ing: IngredientModel, db : SQLLiteDatabaseHandler){
+        this.ingredients.remove(ing)
+        db.updateRecipeIngredientList(this)
+    }
+
+    fun updateIngrediantAmount(ing: IngredientModel, amount: Int, db : SQLLiteDatabaseHandler){
+        this.ingredients.replace(ing, amount)
+        db.updateRecipeIngredientList(this)
     }
 }
-
