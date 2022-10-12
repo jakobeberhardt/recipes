@@ -1,8 +1,10 @@
 package com.ebusiness.recipes.model
+
 import com.ebusiness.recipes.util.Unit
+import java.util.UUID
 
 data class IngredientModel(
-    val uuid : String,
+    val uuid : String = UUID.randomUUID().toString(),
     val name : String,
     var mmd : String?,
     var unit : Unit

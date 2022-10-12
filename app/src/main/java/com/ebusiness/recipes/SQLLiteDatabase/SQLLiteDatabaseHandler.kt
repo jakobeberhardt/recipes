@@ -17,7 +17,7 @@ class SQLLiteDatabaseHandler(context: Context) :
     companion object {
 
         // Db
-        private const val DATABASE_VERSION = 75
+        private const val DATABASE_VERSION = 88
         private const val DATABASE_NAME = "db0"
         private const val LOG_TAG = "DB"
 
@@ -25,6 +25,7 @@ class SQLLiteDatabaseHandler(context: Context) :
         private const val TABLE_NAME_RECIPE = "recipes"
         private const val RECIPE_ID = "recipe_uuid"
         private const val RECIPE_NAME = "recipe_name"
+        private const val RECIPE_TEXT = "recipe_text"
 
         // Zutat Tabelle
         private const val TABLE_NAME_INGREDIENT = "ingredients"
@@ -42,7 +43,8 @@ class SQLLiteDatabaseHandler(context: Context) :
         Log.i(LOG_TAG, "Attempting to create DB")
         val createRecipeTable = ("CREATE TABLE " + TABLE_NAME_RECIPE + "("
                 + RECIPE_ID + " TEXT PRIMARY KEY, "
-                + RECIPE_NAME + " TEXT" + ")")
+                + RECIPE_NAME + " TEXT, "
+                + RECIPE_TEXT + " TEXT" + ")")
         db0?.execSQL(createRecipeTable)
         Log.i(LOG_TAG, "Created $TABLE_NAME_RECIPE Table")
 
@@ -80,6 +82,7 @@ class SQLLiteDatabaseHandler(context: Context) :
         val contentValues = ContentValues()
         contentValues.put(RECIPE_ID, rec.uuid)
         contentValues.put(RECIPE_NAME, rec.name)
+        contentValues.put(RECIPE_TEXT, rec.text)
 
         val success = db0.insert(TABLE_NAME_RECIPE, null, contentValues)
         db0.close()
@@ -106,14 +109,20 @@ class SQLLiteDatabaseHandler(context: Context) :
 
         var uuid: String
         var name: String
+        var text: String
+        var ingredients: MutableMap<IngredientModel, Int> = mutableMapOf()
+
 
         if (cursor.moveToFirst()) {
             do {
                 uuid = cursor.getString(cursor.getColumnIndex(RECIPE_ID))
                 name = cursor.getString(cursor.getColumnIndex(RECIPE_NAME))
+                text = cursor.getString(cursor.getColumnIndex(RECIPE_TEXT))
+                ingredients = getIngredientListByUuid(cursor.getString(cursor.getColumnIndex(RECIPE_ID)))
+
 
                 // Add ingredients once implemented
-                val rec = RecipeModel(uuid = uuid, name = name)
+                val rec = RecipeModel(uuid = uuid, name = name, text = text, ingredients = ingredients)
                 recipeList.add(rec)
             } while (cursor.moveToNext())
         }
@@ -129,8 +138,9 @@ class SQLLiteDatabaseHandler(context: Context) :
             if (it.moveToFirst()) {
                 val uuid = it.getString(it.getColumnIndex(RECIPE_ID))
                 val name = it.getString(it.getColumnIndex(RECIPE_NAME))
+                val text = it.getString(it.getColumnIndex(RECIPE_TEXT))
                 val ingredients = getIngredientListByName(_name)
-                return RecipeModel(uuid = uuid, name = name, ingredients = ingredients)
+                return RecipeModel(uuid = uuid, name = name, text = text, ingredients = ingredients)
             }
         }
         return null
@@ -260,8 +270,9 @@ class SQLLiteDatabaseHandler(context: Context) :
                 if (it.moveToFirst()) {
                     val uuid = it.getString(it.getColumnIndex(RECIPE_ID))
                     val name = it.getString(it.getColumnIndex(RECIPE_NAME))
+                    val text = it.getString(it.getColumnIndex(RECIPE_TEXT))
                     val ingredients = getIngredientListByUuid(_uuid)
-                    return RecipeModel(uuid = uuid, name = name, ingredients = ingredients)
+                    return RecipeModel(uuid = uuid, name = name, text = text, ingredients = ingredients)
                 }
             }
             return null
